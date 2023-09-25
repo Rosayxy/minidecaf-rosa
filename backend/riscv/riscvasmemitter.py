@@ -79,6 +79,8 @@ class RiscvAsmEmitter(AsmEmitter):
         def visitUnary(self, instr: Unary) -> None:
             op = {
                 TacUnaryOp.NEG: RvUnaryOp.NEG,
+                TacUnaryOp.SEQZ:RvUnaryOp.SEQZ,
+                TacUnaryOp.NOT:RvUnaryOp.NOT,                
                 # You can add unary operations here.
             }[instr.op]
             self.seq.append(Riscv.Unary(op, instr.dst, instr.operand))

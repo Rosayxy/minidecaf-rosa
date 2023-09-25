@@ -90,9 +90,16 @@ class Unary(TACInstr):
         self.operand = operand
 
     def __str__(self) -> str:
+        s=""
+        if self.op == TacUnaryOp.NEG:
+            s="-"
+        elif self.op==TacUnaryOp.SEQZ:
+            s="!"
+        else:
+            s="~"
         return "%s = %s %s" % (
             self.dst,
-            ("-" if (self.op == TacUnaryOp.NEG) else "!"),
+            s,
             self.operand,
         )
 
