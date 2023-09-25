@@ -28,7 +28,9 @@ class RvBinaryOp(Enum):
     MUL=auto()
     DIV=auto()
     REM=auto()
-
+    AND = auto()
+    SGT=auto()
+    SLT=auto()
 class Riscv:
 
     ZERO = Reg(0, "x0")  # always zero

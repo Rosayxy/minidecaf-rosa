@@ -22,16 +22,27 @@ class TacUnaryOp(Enum):
     NEG = auto()
     SEQZ = auto()
     NOT = auto()
+
+
 # Kinds of binary operations.
 @unique
 class TacBinaryOp(Enum):
     ADD = auto()
     LOR = auto()
     SUB = auto()
-    MUL=auto()
-    DIV=auto()
-    MOD=auto()
-    
+    MUL = auto()
+    DIV = auto()
+    MOD = auto()
+    EQU = auto()
+    NEQ = auto()
+    SLT = auto()
+    LEQ = auto()
+    SGT = auto()
+    GEQ = auto()
+    LAND = auto()
+    AND = auto()
+    OR = auto()
+
 
 # Kinds of branching with conditions.
 @unique

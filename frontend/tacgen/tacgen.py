@@ -239,6 +239,16 @@ class TACGen(Visitor[TACFuncEmitter, None]):
             node.BinaryOp.Div:tacop.TacBinaryOp.DIV,
             node.BinaryOp.Mul:tacop.TacBinaryOp.MUL,
             node.BinaryOp.Mod:tacop.TacBinaryOp.MOD,
+            node.BinaryOp.EQ:tacop.TacBinaryOp.EQU,
+            node.BinaryOp.NE:tacop.TacBinaryOp.NEQ,
+            node.BinaryOp.BitAnd:tacop.TacBinaryOp.AND,
+            node.BinaryOp.BitOr:tacop.TacBinaryOp.OR,
+            node.BinaryOp.LT:tacop.TacBinaryOp.SLT,
+            node.BinaryOp.LE:tacop.TacBinaryOp.LEQ,
+            node.BinaryOp.GT:tacop.TacBinaryOp.SGT,
+            node.BinaryOp.GE:tacop.TacBinaryOp.GEQ,
+            node.BinaryOp.LogicAnd:tacop.TacBinaryOp.LAND,
+            node.BinaryOp.LogicOr:tacop.TacBinaryOp.LOR,
             # You can add binary operations here.
         }[expr.op]
         expr.setattr(
