@@ -13,7 +13,7 @@ class CFG:
     def __init__(self, nodes: list[BasicBlock], edges: list[(int, int)]) -> None:
         self.nodes = nodes
         self.edges = edges
-
+        self.reachable_nodes=set()
         self.links = []
 
         for i in range(len(nodes)):
@@ -23,6 +23,22 @@ class CFG:
             self.links[u][1].add(v)
             self.links[v][0].add(u)
 
+        #go to the head
+        head=0
+        for (u,v) in edges:
+            if self.getInDegree(u)==0:
+                head=u
+                break
+        self.reachable_nodes.add(self.getBlock(head))
+        #queue to help bfs
+        que = []
+        que.append(head)
+        while que.__len__():
+            cur=que.pop(0)
+            for i in self.links[cur][1]:
+                if i not in self.reachable_nodes:
+                    self.reachable_nodes.add(self.getBlock(i))
+                    que.append(i)                    
         """
         You can start from basic block 0 and do a DFS traversal of the CFG
         to find all the reachable basic blocks.
@@ -44,4 +60,4 @@ class CFG:
         return len(self.links[id][1])
 
     def iterator(self):
-        return iter(self.nodes)
+        return iter(self.reachable_nodes)
