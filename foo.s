@@ -8,7 +8,7 @@
 	.globl	foo
 	.type	foo, @function
 foo:
-	not	a0,a0
+	rem	a0,a0,a1
 	ret
 	.size	foo, .-foo
 	.ident	"GCC: (SiFive GCC 10.1.0-2020.08.2) 10.1.0"

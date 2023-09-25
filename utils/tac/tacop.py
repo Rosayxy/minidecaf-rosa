@@ -27,7 +27,11 @@ class TacUnaryOp(Enum):
 class TacBinaryOp(Enum):
     ADD = auto()
     LOR = auto()
-
+    SUB = auto()
+    MUL=auto()
+    DIV=auto()
+    MOD=auto()
+    
 
 # Kinds of branching with conditions.
 @unique

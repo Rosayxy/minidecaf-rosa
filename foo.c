@@ -1,3 +1,3 @@
-int foo(int x) {
-    return ~x;
+int foo(int x,int y) {
+    return x%y;
 }
