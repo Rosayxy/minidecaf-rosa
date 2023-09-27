@@ -60,4 +60,8 @@ class CFG:
         return len(self.links[id][1])
 
     def iterator(self):
-        return iter(self.reachable_nodes)
+        list_iter=[]
+        for i in self.nodes:
+            if self.reachable_nodes.__contains__(i):
+                list_iter.append(i)
+        return iter(list_iter)

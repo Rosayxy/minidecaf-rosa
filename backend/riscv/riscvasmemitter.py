@@ -1,5 +1,4 @@
 from typing import Sequence, Tuple
-
 from backend.asmemitter import AsmEmitter
 from utils.error import IllegalArgumentException
 from utils.label.label import Label, LabelKind
@@ -126,13 +125,14 @@ class RiscvAsmEmitter(AsmEmitter):
                 }[instr.op]
                 self.seq.append(Riscv.Binary(op, instr.dst, instr.lhs, instr.rhs))
 
-        def visitCondBranch(self, instr: CondBranch) -> None:
+        def visitCondBranch(self, instr: CondBranch) -> None:              
             self.seq.append(Riscv.Branch(instr.cond, instr.label))
-        
         def visitBranch(self, instr: Branch) -> None:
             self.seq.append(Riscv.Jump(instr.target))
         def visitAssign(self,instr:Assign)->None:
             self.seq.append(Riscv.Move(instr.dst,instr.src))
+            
+            
         # in step9, you need to think about how to pass the parameters and how to store and restore callerSave regs
         # in step11, you need to think about how to store the array 
 """

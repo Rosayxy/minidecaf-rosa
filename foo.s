@@ -8,7 +8,11 @@
 	.globl	foo
 	.type	foo, @function
 foo:
-	li	a0,1
+	beq	a0,a1,.L3
+	li	a0,8
+	ret
+.L3:
+	li	a0,6
 	ret
 	.size	foo, .-foo
 	.ident	"GCC: (SiFive GCC 10.1.0-2020.08.2) 10.1.0"
