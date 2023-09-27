@@ -171,6 +171,24 @@ class While(Statement):
     def accept(self, v: Visitor[T, U], ctx: T):
         return v.visitWhile(self, ctx)
 
+class For(Statement):
+    """
+    AST node of for statement.
+    """
+
+    def __init__(self, init: Statement, cond: Expression, after: Statement, body: Statement) -> None:
+        super().__init__("for")
+        self.init = init
+        self.cond = cond
+        self.after = after
+        self.body = body
+
+    def __getitem__(self, key: int) -> Node:
+        return (self.init, self.cond, self.after, self.body)[key]
+    def __len__(self) -> int:
+        return 4
+    def accept(self, v: Visitor[T, U], ctx: T):
+        return v.visitFor(self, ctx)
 
 class Break(Statement):
     """
@@ -192,6 +210,25 @@ class Break(Statement):
     def is_leaf(self):
         return True
 
+class Continue(Statement):
+    """
+    AST node of break statement.
+    """
+
+    def __init__(self) -> None:
+        super().__init__("continue")
+
+    def __getitem__(self, key: int) -> Node:
+        raise _index_len_err(key, self)
+
+    def __len__(self) -> int:
+        return 0
+
+    def accept(self, v: Visitor[T, U], ctx: T):
+        return v.visitContinue(self, ctx)
+
+    def is_leaf(self):
+        return True
 
 class Block(Statement, ListNode[Union["Statement", "Declaration"]]):
     """

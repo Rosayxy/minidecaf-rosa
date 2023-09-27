@@ -36,7 +36,7 @@ class CFG:
         while que.__len__():
             cur=que.pop(0)
             for i in self.links[cur][1]:
-                if i not in self.reachable_nodes:
+                if self.getBlock(i) not in self.reachable_nodes:
                     self.reachable_nodes.add(self.getBlock(i))
                     que.append(i)                    
         """

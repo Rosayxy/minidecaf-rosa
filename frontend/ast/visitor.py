@@ -46,6 +46,9 @@ class Visitor(Protocol[T, U]):  # type: ignore
     def visitBreak(self, that: Break, ctx: T) -> Optional[U]:
         return self.visitOther(that, ctx)
 
+    def visitContinue(self, that: Continue, ctx: T) -> Optional[U]:
+        return self.visitOther(that, ctx)
+    
     def visitDeclaration(self, that: Declaration, ctx: T) -> Optional[U]:
         return self.visitOther(that, ctx)
 

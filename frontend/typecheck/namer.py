@@ -52,15 +52,21 @@ class Namer(Visitor[ScopeStack, None]):
     def visitReturn(self, stmt: Return, ctx: ScopeStack) -> None:
         stmt.expr.accept(self, ctx)
 
-    """
-    def visitFor(self, stmt: For, ctx: Scope) -> None:
-
-    1. Open a local scope for stmt.init.
-    2. Visit stmt.init, stmt.cond, stmt.update.
-    3. Open a loop in ctx (for validity checking of break/continue)
-    4. Visit body of the loop.
-    5. Close the loop and the local scope.
-    """
+    def visitFor(self, stmt: For, ctx: ScopeStack) -> None:
+    
+    #1. Open a local scope for stmt.init.
+    #2. Visit stmt.init, stmt.cond, stmt.update.
+    #3. Open a loop in ctx (for validity checking of break/continue)
+    #4. Visit body of the loop.
+    #5. Close the loop and the local scope.
+        ctx.push(Scope(ScopeKind.LOCAL))
+        stmt.init.accept(self, ctx)
+        ctx.pushloop(Scope(ScopeKind.LOCAL))        
+        stmt.cond.accept(self, ctx)
+        stmt.body.accept(self,ctx)
+        ctx.poploop()
+        stmt.after.accept(self, ctx)
+        ctx.pop()
 
     def visitIf(self, stmt: If, ctx: ScopeStack) -> None:
         stmt.cond.accept(self, ctx)
@@ -78,17 +84,19 @@ class Namer(Visitor[ScopeStack, None]):
         """
         You need to check if it is currently within the loop.
         To do this, you may need to check 'visitWhile'.
-
+        
         if not in a loop:
-            raise DecafBreakOutsideLoopError()
+            
         """
-        raise NotImplementedError
+        if not ctx.loop.__len__():
+            raise DecafBreakOutsideLoopError()
 
-    """
+    
     def visitContinue(self, stmt: Continue, ctx: Scope) -> None:
     
-    1. Refer to the implementation of visitBreak.
-    """
+    #1. Refer to the implementation of visitBreak.
+        if not ctx.loop.__len__():
+            raise DecafContinueOutsideLoopError()
 
     def visitDeclaration(self, decl: Declaration, ctx: ScopeStack) -> None:
         """

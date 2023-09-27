@@ -156,7 +156,8 @@ class TACGen(Visitor[TACFuncEmitter, None]):
 
     def visitBreak(self, stmt: Break, mv: TACFuncEmitter) -> None:
         mv.visitBranch(mv.getBreakLabel())
-
+    def visitContinue(self, stmt: Continue, mv: TACFuncEmitter) -> None:
+        mv.visitBranch(mv.getContinueLabel())
     def visitIdentifier(self, ident: Identifier, mv: TACFuncEmitter) -> None:
         """
         1. Set the 'val' attribute of ident as the temp variable of the 'symbol' attribute of ident.
@@ -211,17 +212,30 @@ class TACGen(Visitor[TACFuncEmitter, None]):
         loopLabel = mv.freshLabel()
         breakLabel = mv.freshLabel()
         mv.openLoop(breakLabel, loopLabel)
-
         mv.visitLabel(beginLabel)
         stmt.cond.accept(self, mv)
         mv.visitCondBranch(tacop.CondBranchOp.BEQ, stmt.cond.getattr("val"), breakLabel)
-
         stmt.body.accept(self, mv)
         mv.visitLabel(loopLabel)
         mv.visitBranch(beginLabel)
         mv.visitLabel(breakLabel)
         mv.closeLoop()
-
+    def visitFor(self, stmt: For, mv: TACFuncEmitter)->None:
+        beginLabel = mv.freshLabel()
+        loopLabel = mv.freshLabel()
+        breakLabel = mv.freshLabel()
+        
+        mv.openLoop(breakLabel, loopLabel)
+        stmt.init.accept(self, mv)  
+        mv.visitLabel(beginLabel)        
+        stmt.cond.accept(self, mv)
+        mv.visitCondBranch(tacop.CondBranchOp.BEQ, stmt.cond.getattr("val"), breakLabel)        
+        stmt.body.accept(self, mv)
+        mv.visitLabel(loopLabel)
+        stmt.after.accept(self,mv)        
+        mv.visitBranch(beginLabel)
+        mv.visitLabel(breakLabel)
+        mv.closeLoop()
     def visitUnary(self, expr: Unary, mv: TACFuncEmitter) -> None:
         expr.operand.accept(self, mv)
 
