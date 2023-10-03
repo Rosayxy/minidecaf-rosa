@@ -20,6 +20,7 @@ class RvUnaryOp(Enum):
     SNEZ = auto()
     SEQZ=auto()
     NOT=auto()
+    CALL=auto()
 @unique
 class RvBinaryOp(Enum):
     ADD = auto()
@@ -194,3 +195,27 @@ class Riscv:
 
         def __str__(self) -> str:
             return "ret"
+    class Call(TACInstr):
+        def __init__(self,dst: Temp, src: [Temp],target:Label)->None:
+            super().__init__(InstrKind.CALL,[dst],src,target)
+            self.target=target
+            
+        def __str__(self) -> str:
+            return "call " + self.target
+        
+    class StoreExpression(TACInstr):
+        def __init__(self,src:Temp,offset:int)->None:
+            super().__init__(InstrKind.SEQ,None,[src],None)
+            self.offset=offset
+        def __str__(self) -> str:
+            return "sw "+Riscv.FMT_OFFSET.format(str(self.srcs[0]),str(self.offset),str(Riscv.SP))
+        
+    class Param(TACInstr):
+        def __init__(self,src:[Temp])->None:
+            super().__init__(InstrKind.SEQ,None,src,None)
+        def __str__(self) -> str:
+            param=""
+            offset=0
+            for i in range(len(self.srcs)):
+                param+="lw "+Riscv.FMT_OFFSET.format(str(self.srcs[i]),str(self.offset),str(Riscv.SP))+"\n"
+                offset+=4

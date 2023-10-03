@@ -34,6 +34,8 @@ class CFGBuilder:
                         kind = BlockKind.END_BY_COND_JUMP
                     elif item.kind is InstrKind.RET:
                         kind = BlockKind.END_BY_RETURN
+                    elif item.kind is InstrKind.CALL:
+                        kind=BlockKind.END_BY_CALL
                     else:
                         kind = None
                     bb = BasicBlock(kind, len(self.bbs), self.currentBBLabel, self.buf)
@@ -60,6 +62,11 @@ class CFGBuilder:
                     edges.append((bb.id, bb.id + 1))
             elif bb.kind is BlockKind.END_BY_RETURN:
                 pass
+            elif bb.kind is BlockKind.END_BY_CALL:
+                if self.labelsToBBs.get(bb.getLastInstr().label) is None:
+                    raise NullPointerException
+                #edges.append((bb.id, self.labelsToBBs.get(bb.getLastInstr().label)))
+                edges.append((bb.id, bb.id + 1))
             else:
                 if now < len(self.bbs):
                     edges.append((bb.id, bb.id + 1))

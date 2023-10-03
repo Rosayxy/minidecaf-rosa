@@ -1,8 +1,8 @@
-from frontend.ast.node import Optional
-from frontend.ast.tree import Function, Optional
+from frontend.ast.node import T, Optional
+from frontend.ast.tree import T, Call, Function, Optional
 from frontend.ast import node
 from frontend.ast.tree import *
-from frontend.ast.visitor import Visitor
+from frontend.ast.visitor import T, Visitor
 from frontend.symbol.varsymbol import VarSymbol
 from frontend.type.array import ArrayType
 from utils.label.blocklabel import BlockLabel
@@ -108,7 +108,12 @@ class TACFuncEmitter(TACVisitor):
 
     def visitRaw(self, instr: TACInstr) -> None:
         self.func.add(instr)
-
+        
+    def visitCall(self, func: str, dst:Temp,args: [Temp]) -> None:
+        self.func.add(Call(func, dst,args))
+    
+    def visitDecl(self,args:[Temp])->None:
+        self.func.add(Decl(args))    
     def visitEnd(self) -> TACFunc:
         if (len(self.func.instrSeq) == 0) or (not self.func.instrSeq[-1].isReturn()):
             self.func.add(Return(None))
@@ -141,11 +146,19 @@ class TACGen(Visitor[TACFuncEmitter, None]):
         tacFuncs = []
         for funcName, astFunc in program.functions().items():
             # in step9, you need to use real parameter count
-            emitter = TACFuncEmitter(FuncLabel(funcName), 0, labelManager)
+            emitter = TACFuncEmitter(funcName, 0, labelManager)
+            astFunc.para_list.accept(self, emitter)
             astFunc.body.accept(self, emitter)
             tacFuncs.append(emitter.visitEnd())
         return TACProg(tacFuncs)
-
+    
+    #def visitFunction(self, func: Function, mv: TACFuncEmitter)->None:
+    def visitDecl(self, decl: DeclarationList, mv: TACFuncEmitter) -> None:
+        decl.setattr("tmps",[])
+        for child in decl:
+            child.accept(self,mv)
+            decl.getattr("tmps").append(child.getattr("symbol").temp)    
+        mv.visitDecl(decl.getattr("tmps"))
     def visitBlock(self, block: Block, mv: TACFuncEmitter) -> None:
         for child in block:
             child.accept(self, mv)
@@ -156,8 +169,10 @@ class TACGen(Visitor[TACFuncEmitter, None]):
 
     def visitBreak(self, stmt: Break, mv: TACFuncEmitter) -> None:
         mv.visitBranch(mv.getBreakLabel())
+        
     def visitContinue(self, stmt: Continue, mv: TACFuncEmitter) -> None:
         mv.visitBranch(mv.getContinueLabel())
+        
     def visitIdentifier(self, ident: Identifier, mv: TACFuncEmitter) -> None:
         """
         1. Set the 'val' attribute of ident as the temp variable of the 'symbol' attribute of ident.
@@ -220,6 +235,7 @@ class TACGen(Visitor[TACFuncEmitter, None]):
         mv.visitBranch(beginLabel)
         mv.visitLabel(breakLabel)
         mv.closeLoop()
+        
     def visitFor(self, stmt: For, mv: TACFuncEmitter)->None:
         beginLabel = mv.freshLabel()
         loopLabel = mv.freshLabel()
@@ -236,9 +252,9 @@ class TACGen(Visitor[TACFuncEmitter, None]):
         mv.visitBranch(beginLabel)
         mv.visitLabel(breakLabel)
         mv.closeLoop()
+        
     def visitUnary(self, expr: Unary, mv: TACFuncEmitter) -> None:
         expr.operand.accept(self, mv)
-
         op = {
             node.UnaryOp.Neg: tacop.TacUnaryOp.NEG,
             node.UnaryOp.LogicNot:tacop.TacUnaryOp.SEQZ,
@@ -292,5 +308,15 @@ class TACGen(Visitor[TACFuncEmitter, None]):
         expr.otherwise.accept(self, mv)        
         mv.visitAssignment(expr.getattr("val"), expr.otherwise.getattr("val"))
         mv.visitLabel(exitLabel)
+        
     def visitIntLiteral(self, expr: IntLiteral, mv: TACFuncEmitter) -> None:
         expr.setattr("val", mv.visitLoad(expr.value))
+        
+    def visitCall(self, that: Call, mv:TACFuncEmitter) -> None:
+        para_list=[]
+        for i in that.args:
+            i.accept(self, mv)
+            para_list.append(i.getattr("val"))
+        that.setattr("val", mv.freshTemp())
+        mv.visitCall(that.ident.value,that.getattr("val"),para_list)
+        

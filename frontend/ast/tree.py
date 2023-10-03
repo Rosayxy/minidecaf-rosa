@@ -10,7 +10,7 @@ from typing import Any, Generic, Optional, TypeVar, Union
 
 from frontend.type import INT, DecafType
 from utils import T, U
-
+from utils.tac.temp import Temp
 from .node import NULL, BinaryOp, Node, UnaryOp
 from .visitor import Visitor, accept
 
@@ -256,17 +256,6 @@ class DeclarationList(ListNode["Declaration"]):
     def accept(self, v: Visitor[T, U], ctx: T):
         return v.visitDecl(self, ctx)
     
-class ExprList(ListNode["Expression"]):
-    """
-    AST node of expression list
-    """
-    def __init__(self, *children: Expression) -> None:
-        super().__init__("exprlist", list(children))
-
-    def accept(self, v: Visitor[T, U], ctx: T):
-        return v.visitExprList(self, ctx)
-    def __getitem__(self, key: int) -> Node:
-        return super().__getitem__(key)
 class Declaration(Node):
     """
     AST node of declaration.
@@ -302,22 +291,24 @@ class Expression(Node):
         super().__init__(name)
         self.type: Optional[DecafType] = None
 
-class FuncCall(Expression):
+class Call(Expression):
     """
     AST node of function call.
     """
 
-    def __init__(self, ident: Identifier, args: ExprList) -> None:
+    def __init__(self, ident: Identifier, args: [Temp]) -> None:
         super().__init__("func_call")
         self.ident = ident
         self.args = args
 
     def accept(self, v: Visitor[T, U], ctx: T):
-        return v.visitFuncCall(self, ctx)
+        return v.visitCall(self, ctx)
     def __getitem__(self, key: int) -> Node:
-        return [self.ident,self.args](key)
+        return [self.ident,self.args][key]
     def __len__(self) -> int:
-        return self.args.__len__() + 1
+        return len(self.args) + 1
+    def __str__(self)->str:
+        return f"{self.ident}({','.join(map(str,self.args))})"
     
 class Unary(Expression):
     """

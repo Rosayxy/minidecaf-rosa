@@ -1,8 +1,9 @@
 from typing import Protocol, TypeVar, cast
 
-from frontend.ast.node import Node, NullType
+from frontend.ast.node import T, Node, NullType, Optional
 from frontend.ast.tree import *
-from frontend.ast.visitor import RecursiveVisitor, Visitor
+from frontend.ast.tree import T, Call, DeclarationList, Function, Optional
+from frontend.ast.visitor import T, RecursiveVisitor, Visitor
 from frontend.scope.globalscope import GlobalScope
 from frontend.scope.scope import Scope, ScopeKind
 from frontend.symbol.funcsymbol import FuncSymbol
@@ -35,13 +36,23 @@ class Namer(Visitor[ScopeStack, None]):
         # Check if the 'main' function is missing
         if not program.hasMainFunc():
             raise DecafNoMainFuncError
-
         for func in program.functions().values():
             func.accept(self, ctx)
 
     def visitFunction(self, func: Function, ctx: ScopeStack) -> None:
-        func.body.accept(self, ctx)
-
+        #create function symbol in current scope        
+        if not ctx.top().lookup(func.ident.value):
+            var=FuncSymbol(func.ident.value,func.ret_t.name,ctx.top())
+            for i in func.para_list.children:
+                var.addParaType(i.var_t.type)
+            ctx.top().declare(var)
+            func.setattr('symbol',var)
+        ctx.push(Scope(ScopeKind.LOCAL))
+        func.para_list.accept(self, ctx)
+        for child in func.body:
+            child.accept(self, ctx)
+        ctx.pop()
+        
     def visitBlock(self, block: Block, ctx: ScopeStack) -> None:
         #要在循环外面压作用域栈！因为注意一下block的child全是statement或者expression类型而不是block！
         # 调试输出了一波也不明白Block这么多是怎么回事，检查了将近两个小时才发现的问题
@@ -49,6 +60,7 @@ class Namer(Visitor[ScopeStack, None]):
         for child in block:            
             child.accept(self, ctx)
         ctx.pop()
+        
     def visitReturn(self, stmt: Return, ctx: ScopeStack) -> None:
         stmt.expr.accept(self, ctx)
 
@@ -110,7 +122,8 @@ class Namer(Visitor[ScopeStack, None]):
             ctx.top().declare(var)
             decl.setattr('symbol',var) 
             if decl.init_expr:
-                decl.init_expr.accept(self,ctx)   
+                decl.init_expr.accept(self,ctx)  
+                 
     def visitAssignment(self, expr: Assignment, ctx: ScopeStack) -> None:
         """
         1. Refer to the implementation of visitBinary.
@@ -150,3 +163,18 @@ class Namer(Visitor[ScopeStack, None]):
         value = expr.value
         if value > MAX_INT:
             raise DecafBadIntValueError(value)
+
+    def visitDecl(self, that: DeclarationList, ctx: T) -> None:
+        for child in that.children:
+            child.accept(self, ctx)
+    
+    def visitCall(self, that: Call, ctx: T) -> None:
+        if not ctx.lookup(that.ident.value):
+            raise DecafUndefinedVarError(that.ident.value)
+        
+        that.setattr("symbol",ctx.lookup(that.ident.value))
+        if len(that.args)!=len(ctx.lookup(that.ident.value).para_type):
+            raise DecafBadFuncCallError(that.ident.value)
+        
+        for arg in that.args:
+            arg.accept(self, ctx)

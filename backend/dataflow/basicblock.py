@@ -16,7 +16,7 @@ class BlockKind(Enum):
     END_BY_JUMP = auto()
     END_BY_COND_JUMP = auto()
     END_BY_RETURN = auto()
-
+    END_BY_CALL = auto()
 
 """
 BasicBlock

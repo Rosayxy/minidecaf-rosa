@@ -211,3 +211,27 @@ class Mark(TACInstr):
 
     def accept(self, v: TACVisitor) -> None:
         v.visitMark(self)
+        
+class Call(TACInstr):
+    def __init__(self, func: str,dst:Temp, args: [Temp]) -> None:
+        super().__init__(InstrKind.CALL,[],args,None)
+        self.func = func
+        self.args=args
+        self.dst=dst
+    def __str__(self) ->str:
+        ret_str=self.dst.__str__()+" = call "+self.func+"("
+        for i in self.args:
+            ret_str+=i.__str__()+","
+        ret_str=ret_str[:-1]+")"
+        return ret_str
+
+class Decl(TACInstr):
+    def __init__(self,srcs:[Temp])->None:
+        super().__init__(InstrKind.SEQ,[],srcs,None)
+        self.srcs=srcs
+    def __str__(self)->str:
+        decl_str="PARAM "
+        for i in self.srcs:
+            decl_str+=i.__str__()+" "
+        decl_str+="\n"
+        return decl_str

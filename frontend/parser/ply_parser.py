@@ -46,11 +46,11 @@ def p_program(p):
     p[0] = Program(p[1])
 def p_program_1(p):
     """
-    program : function program
+    program :  program function 
     """
-    if p[1]:
-        p[2].children.append(p[1])
-    p[0]=p[2]
+    if p[2]:
+        p[1].children.append(p[2])
+    p[0]=p[1]
 
 def p_type(p):
     """
@@ -65,6 +65,7 @@ def p_declaration_list_1(p):
     if p[1]:
         p[3].children.append(p[1])
     p[0] = p[3]
+    
 def p_declaration_list_2(p):
     """
     declaration_list : declaration
@@ -86,33 +87,30 @@ def p_function_def(p):
     """
     p[0] = Function(p[1], p[2], p[7],p[4])
 
-def p_expr_list(p):
-    """
-    expr_list : empty
-    """
-    p[0] = ExprList()
-
 def p_expr_list_1(p):
     """
-    expr_list : expr_list Comma expression
+    expr_list : expression Comma expr_list
     """
-    if p[3]:
-        p[1].children.append(p[3])
-    p[0] = p[1]
+    if p[1]:
+        p[3].append(p[1])
+    p[0] = p[3]
 
 def p_expr_list_2(p):
     """
     expr_list : expression
     """
-    p[0] = ExprList()
-    if p[1]:
-        p[0].children.append(p[1])
+    p[0] = [p[1]]
 
+def p_expr_list_empty(p):
+    """
+    expr_list : empty
+    """
+    p[0] = []
 def p_funccall(p):
     """
     funccall : Identifier LParen expr_list RParen
     """
-    p[0]=FuncCall(p[1],p[3])
+    p[0]=Call(p[1],p[3])
 def p_block(p):
     """
     block : block block_item

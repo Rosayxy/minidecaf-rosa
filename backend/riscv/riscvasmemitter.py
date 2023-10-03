@@ -131,8 +131,19 @@ class RiscvAsmEmitter(AsmEmitter):
             self.seq.append(Riscv.Jump(instr.target))
         def visitAssign(self,instr:Assign)->None:
             self.seq.append(Riscv.Move(instr.dst,instr.src))
-            
-            
+
+        def visitCall(self, instr: Call)->None:
+            self.seq.append(Riscv.SPAdd(-len(instr.args)*4))
+            offset=0
+            for i in instr.args:
+                self.seq.append(Riscv.StoreExpression(i,offset))
+                offset+=4
+            self.seq.append(Riscv.Call(instr.dst,instr.args,instr.func))
+            self.seq.append(Riscv.Move(instr.dst,Riscv.A0))
+            self.seq.append(Riscv.SPAdd(len(instr.args)*4))
+        
+        def visitDecl(self,instr:Decl):
+            self.seq.append(Riscv.Param(instr.srcs))
         # in step9, you need to think about how to pass the parameters and how to store and restore callerSave regs
         # in step11, you need to think about how to store the array 
 """
