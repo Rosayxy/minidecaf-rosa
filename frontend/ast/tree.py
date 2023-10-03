@@ -76,21 +76,23 @@ class Function(Node):
         ret_t: TypeLiteral,
         ident: Identifier,
         body: Block,
+        para_list:DeclarationList,        
     ) -> None:
         super().__init__("function")
         self.ret_t = ret_t
         self.ident = ident
         self.body = body
-
+        self.para_list = para_list
     def __getitem__(self, key: int) -> Node:
         return (
             self.ret_t,
             self.ident,
             self.body,
+            self.para_list,
         )[key]
 
     def __len__(self) -> int:
-        return 3
+        return 3+self.para_list.__len__()
 
     def accept(self, v: Visitor[T, U], ctx: T):
         return v.visitFunction(self, ctx)
@@ -244,7 +246,27 @@ class Block(Statement, ListNode[Union["Statement", "Declaration"]]):
     def is_block(self) -> bool:
         return True
 
+class DeclarationList(ListNode["Declaration"]):
+    """
+    AST node of function parameter list
+    """
+    def __init__(self, *children: Declaration) -> None:
+        super().__init__("declarationlist", list(children))
 
+    def accept(self, v: Visitor[T, U], ctx: T):
+        return v.visitDecl(self, ctx)
+    
+class ExprList(ListNode["Expression"]):
+    """
+    AST node of expression list
+    """
+    def __init__(self, *children: Expression) -> None:
+        super().__init__("exprlist", list(children))
+
+    def accept(self, v: Visitor[T, U], ctx: T):
+        return v.visitExprList(self, ctx)
+    def __getitem__(self, key: int) -> Node:
+        return super().__getitem__(key)
 class Declaration(Node):
     """
     AST node of declaration.
@@ -280,7 +302,23 @@ class Expression(Node):
         super().__init__(name)
         self.type: Optional[DecafType] = None
 
+class FuncCall(Expression):
+    """
+    AST node of function call.
+    """
 
+    def __init__(self, ident: Identifier, args: ExprList) -> None:
+        super().__init__("func_call")
+        self.ident = ident
+        self.args = args
+
+    def accept(self, v: Visitor[T, U], ctx: T):
+        return v.visitFuncCall(self, ctx)
+    def __getitem__(self, key: int) -> Node:
+        return [self.ident,self.args](key)
+    def __len__(self) -> int:
+        return self.args.__len__() + 1
+    
 class Unary(Expression):
     """
     AST node of unary expression.

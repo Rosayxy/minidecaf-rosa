@@ -44,7 +44,13 @@ def p_program(p):
     program : function
     """
     p[0] = Program(p[1])
-
+def p_program_1(p):
+    """
+    program : function program
+    """
+    if p[1]:
+        p[2].children.append(p[1])
+    p[0]=p[2]
 
 def p_type(p):
     """
@@ -52,14 +58,61 @@ def p_type(p):
     """
     p[0] = TInt()
 
+def p_declaration_list_1(p):
+    """
+    declaration_list : declaration Comma declaration_list
+    """
+    if p[1]:
+        p[3].children.append(p[1])
+    p[0] = p[3]
+def p_declaration_list_2(p):
+    """
+    declaration_list : declaration
+    """
+    p[0] = DeclarationList()
+    if p[1]:
+        p[0].children.append(p[1])
+
+
+def p_declaration_list_empty(p):
+    """
+    declaration_list : empty
+    """
+    p[0] = DeclarationList()
 
 def p_function_def(p):
     """
-    function : type Identifier LParen RParen LBrace block RBrace
+    function : type Identifier LParen declaration_list RParen LBrace block RBrace
     """
-    p[0] = Function(p[1], p[2], p[6])
+    p[0] = Function(p[1], p[2], p[7],p[4])
 
+def p_expr_list(p):
+    """
+    expr_list : empty
+    """
+    p[0] = ExprList()
 
+def p_expr_list_1(p):
+    """
+    expr_list : expr_list Comma expression
+    """
+    if p[3]:
+        p[1].children.append(p[3])
+    p[0] = p[1]
+
+def p_expr_list_2(p):
+    """
+    expr_list : expression
+    """
+    p[0] = ExprList()
+    if p[1]:
+        p[0].children.append(p[1])
+
+def p_funccall(p):
+    """
+    funccall : Identifier LParen expr_list RParen
+    """
+    p[0]=FuncCall(p[1],p[3])
 def p_block(p):
     """
     block : block block_item
@@ -205,6 +258,7 @@ def p_expression_precedence(p):
     additive : multiplicative
     multiplicative : unary
     unary : postfix
+    unary : funccall
     postfix : primary
     """
     p[0] = p[1]
