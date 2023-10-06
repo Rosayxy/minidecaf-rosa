@@ -132,18 +132,9 @@ class RiscvAsmEmitter(AsmEmitter):
         def visitAssign(self,instr:Assign)->None:
             self.seq.append(Riscv.Move(instr.dst,instr.src))
 
-        def visitCall(self, instr: Call)->None:
-            self.seq.append(Riscv.SPAdd(-len(instr.args)*4))
-            offset=0
-            for i in instr.args:
-                self.seq.append(Riscv.StoreExpression(i,offset))
-                offset+=4
-            self.seq.append(Riscv.Call(instr.dst,instr.args,instr.func))
+        def visitCall(self, instr: Call)->None:        
+            self.seq.append(Riscv.Call(instr.dst,instr.args,Label(LabelKind.FUNC,instr.func)))
             self.seq.append(Riscv.Move(instr.dst,Riscv.A0))
-            self.seq.append(Riscv.SPAdd(len(instr.args)*4))
-        
-        def visitDecl(self,instr:Decl):
-            self.seq.append(Riscv.Param(instr.srcs))
         # in step9, you need to think about how to pass the parameters and how to store and restore callerSave regs
         # in step11, you need to think about how to store the array 
 """
@@ -188,7 +179,11 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
     # in step9, you need to think about the fuction parameters here
     def emitLoadFromStack(self, dst: Reg, src: Temp):
         if src.index not in self.offsets:
-            raise IllegalArgumentException()
+            if src.index<8:
+                self.buf.append(Riscv.Move(dst,Riscv.ArgRegs[src.index]))
+            else:
+                self.buf.append(Riscv.NativeLoadWord(dst, Riscv.SP, (src.index-7)*4+self.nextLocalOffset))
+            #raise IllegalArgumentException()
         else:
             self.buf.append(
                 Riscv.NativeLoadWord(dst, Riscv.SP, self.offsets[src.index])
@@ -205,7 +200,7 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
     
     def emitEnd(self):
         self.printer.printComment("start of prologue")
-        self.printer.printInstr(Riscv.SPAdd(-self.nextLocalOffset))
+        self.printer.printInstr(Riscv.SPAdd(-self.nextLocalOffset-4))
 
         # in step9, you need to think about how to store RA here
         # you can get some ideas from how to save CalleeSaved regs
@@ -214,7 +209,7 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
                 self.printer.printInstr(
                     Riscv.NativeStoreWord(Riscv.CalleeSaved[i], Riscv.SP, 4 * i)
                 )
-
+        self.printer.printInstr(Riscv.NativeStoreWord(Riscv.RA, Riscv.SP,self.nextLocalOffset))
         self.printer.printComment("end of prologue")
         self.printer.println("")
 
@@ -240,8 +235,8 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
                 self.printer.printInstr(
                     Riscv.NativeLoadWord(Riscv.CalleeSaved[i], Riscv.SP, 4 * i)
                 )
-
-        self.printer.printInstr(Riscv.SPAdd(self.nextLocalOffset))
+        self.printer.printInstr(Riscv.NativeLoadWord(Riscv.RA, Riscv.SP, self.nextLocalOffset ))
+        self.printer.printInstr(Riscv.SPAdd(self.nextLocalOffset+4))
         self.printer.printComment("end of epilogue")
         self.printer.println("")
 

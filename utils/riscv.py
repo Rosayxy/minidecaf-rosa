@@ -197,11 +197,11 @@ class Riscv:
             return "ret"
     class Call(TACInstr):
         def __init__(self,dst: Temp, src: [Temp],target:Label)->None:
-            super().__init__(InstrKind.CALL,[dst],src,target)
+            super().__init__(InstrKind.SEQ,[dst],src,target)
             self.target=target
             
         def __str__(self) -> str:
-            return "call " + self.target
+            return "call " + self.target.name
         
     class StoreExpression(TACInstr):
         def __init__(self,src:Temp,offset:int)->None:

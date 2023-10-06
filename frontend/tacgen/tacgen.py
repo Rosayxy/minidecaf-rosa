@@ -13,7 +13,7 @@ from utils.tac.tacinstr import *
 from utils.tac.tacfunc import TACFunc
 from utils.tac.tacprog import TACProg
 from utils.tac.tacvisitor import TACVisitor
-
+from utils.label.label import LabelKind
 
 """
 The TAC generation phase: translate the abstract syntax tree into three-address code.
@@ -111,9 +111,7 @@ class TACFuncEmitter(TACVisitor):
         
     def visitCall(self, func: str, dst:Temp,args: [Temp]) -> None:
         self.func.add(Call(func, dst,args))
-    
-    def visitDecl(self,args:[Temp])->None:
-        self.func.add(Decl(args))    
+      
     def visitEnd(self) -> TACFunc:
         if (len(self.func.instrSeq) == 0) or (not self.func.instrSeq[-1].isReturn()):
             self.func.add(Return(None))
@@ -146,7 +144,7 @@ class TACGen(Visitor[TACFuncEmitter, None]):
         tacFuncs = []
         for funcName, astFunc in program.functions().items():
             # in step9, you need to use real parameter count
-            emitter = TACFuncEmitter(funcName, 0, labelManager)
+            emitter = TACFuncEmitter(Label(LabelKind.FUNC,funcName), 0, labelManager)
             astFunc.para_list.accept(self, emitter)
             astFunc.body.accept(self, emitter)
             tacFuncs.append(emitter.visitEnd())
@@ -158,7 +156,7 @@ class TACGen(Visitor[TACFuncEmitter, None]):
         for child in decl:
             child.accept(self,mv)
             decl.getattr("tmps").append(child.getattr("symbol").temp)    
-        mv.visitDecl(decl.getattr("tmps"))
+        
     def visitBlock(self, block: Block, mv: TACFuncEmitter) -> None:
         for child in block:
             child.accept(self, mv)

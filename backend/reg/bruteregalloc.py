@@ -26,14 +26,15 @@ because we can remove all the GlobalTemp in selectInstr process
 5. allocForLoc：每一条指令进行寄存器分配
 6. allocRegFor：根据数据流决定为当前 Temp 分配哪一个寄存器
 """
-
+#主要是asm.py在调用它
 class BruteRegAlloc(RegAlloc):
     def __init__(self, emitter: RiscvAsmEmitter) -> None:
         super().__init__(emitter)
         self.bindings = {}
         for reg in emitter.allocatableRegs:
             reg.used = False
-
+        self.callersaves = [] #记录下保存的caller-save registers
+        
     def accept(self, graph: CFG, info: SubroutineInfo) -> None:
         subEmitter = self.emitter.emitSubroutine(info)
         for bb in graph.iterator():
@@ -91,9 +92,54 @@ class BruteRegAlloc(RegAlloc):
                 dstRegs.append(temp)
             else:
                 dstRegs.append(self.allocRegFor(temp, False, loc.liveIn, subEmitter))
-
+        if isinstance(instr,Riscv.Call):
+            #记录下所有使用过的caller-saved register
+            offset=0
+            for i in self.emitter.callerSaveRegs:
+                if i.isUsed():
+                    self.callersaves.append(i)
+                    subEmitter.emitNative(Riscv.NativeStoreWord(i,Riscv.SP,offset*4))
+                    offset+=1
+            #此时所有的参数都在srcRegs里面
+            if len(instr.srcs)>8:
+                #store on stack the 8+ parameters
+                subEmitter.emitNative(Riscv.SPAdd(-4*(len(instr.srcs)-8)))
+                index=0
+                for i in srcRegs[8:]:
+                    subEmitter.emitNative(Riscv.NativeStoreWord(i,Riscv.SP,4*(len(instr.srcs)-8-index)))
+                    index+=1
+            onstack_index=[]#store the first 8 register who has been put on stack       
+            cnt=0
+            for i in srcRegs:
+                if i in Riscv.ArgRegs:
+                    subEmitter.emitNative(Riscv.SPAdd(-4))
+                    subEmitter.emitNative(Riscv.NativeStoreWord(i,Riscv.SP,0))    
+                    onstack_index.append(cnt)
+                cnt+=1
+            cnt=0
+            for i in srcRegs:
+                if cnt in onstack_index:
+                    j=0
+                    while (onstack_index[j]!=cnt):
+                        j+=1
+                    subEmitter.emitNative(Riscv.NativeLoadWord(Riscv.ArgRegs[cnt],Riscv.SP,(len(onstack_index)-1-j)*4))
+                else:
+                    subEmitter.emitNative(Riscv.Move(Riscv.ArgRegs[cnt],i))
+                cnt+=1
+            subEmitter.emitNative(Riscv.SPAdd(4*(len(onstack_index))))
+                                
         subEmitter.emitNative(instr.toNative(dstRegs, srcRegs))
-
+        #restore
+        if isinstance(instr,Riscv.Call):
+            if len(instr.srcs)>8:
+                subEmitter.emitNative(Riscv.SPAdd(4*(len(instr.srcs)-8)))
+            offset=0
+            for i in self.callersaves:
+                if i!=Riscv.A0:
+                    subEmitter.emitNative(Riscv.NativeLoadWord(i,Riscv.SP,4*offset))
+                offset+=1
+            self.callersaves.clear()
+                
     def allocRegFor(
         self, temp: Temp, isRead: bool, live: set[int], subEmitter: SubroutineEmitter
     ):

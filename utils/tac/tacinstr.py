@@ -224,14 +224,5 @@ class Call(TACInstr):
             ret_str+=i.__str__()+","
         ret_str=ret_str[:-1]+")"
         return ret_str
-
-class Decl(TACInstr):
-    def __init__(self,srcs:[Temp])->None:
-        super().__init__(InstrKind.SEQ,[],srcs,None)
-        self.srcs=srcs
-    def __str__(self)->str:
-        decl_str="PARAM "
-        for i in self.srcs:
-            decl_str+=i.__str__()+" "
-        decl_str+="\n"
-        return decl_str
+    def accept(self, v: TACVisitor) -> None:
+        v.visitCall(self)
