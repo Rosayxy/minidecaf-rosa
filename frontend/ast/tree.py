@@ -13,7 +13,7 @@ from utils import T, U
 from utils.tac.temp import Temp
 from .node import NULL, BinaryOp, Node, UnaryOp
 from .visitor import Visitor, accept
-
+from utils.error import *
 _T = TypeVar("_T", bound=Node)
 U = TypeVar("U", covariant=True)
 
@@ -54,6 +54,14 @@ class Program(ListNode["Function"]):
         super().__init__("program", list(children))
 
     def functions(self) -> dict[str, Function]:
+        #check for multiple definition in functions
+        function_list=[]
+        for func in self:
+            if isinstance(func, Function):
+                if func.ident.value in function_list:
+                    raise DecafDeclConflictError
+                else:
+                    function_list.append(func.ident.value)
         return {func.ident.value: func for func in self if isinstance(func, Function)}
 
     def hasMainFunc(self) -> bool:
@@ -92,7 +100,7 @@ class Function(Node):
         )[key]
 
     def __len__(self) -> int:
-        return 3+self.para_list.__len__()
+        return 4
 
     def accept(self, v: Visitor[T, U], ctx: T):
         return v.visitFunction(self, ctx)

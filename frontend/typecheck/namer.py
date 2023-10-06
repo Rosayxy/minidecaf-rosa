@@ -40,13 +40,16 @@ class Namer(Visitor[ScopeStack, None]):
             func.accept(self, ctx)
 
     def visitFunction(self, func: Function, ctx: ScopeStack) -> None:
-        #create function symbol in current scope        
-        if not ctx.top().lookup(func.ident.value):
+        #create function symbol in current scope       
+        if not ctx.lookup(func.ident.value):
             var=FuncSymbol(func.ident.value,func.ret_t.name,ctx.top())
             for i in func.para_list.children:
                 var.addParaType(i.var_t.type)
             ctx.top().declare(var)
             func.setattr('symbol',var)
+        else:
+            #print("redeclaration")
+            raise DecafDeclConflictError(func.ident.value)
         ctx.push(Scope(ScopeKind.LOCAL))
         func.para_list.accept(self, ctx)
         for child in func.body:
