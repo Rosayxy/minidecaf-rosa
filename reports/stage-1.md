@@ -2,14 +2,14 @@
 - 于新雨 计25 2022010841
 ## step1
 ### 思考题
-1. 不能，无法正常进行tac的生成，namer和typer的作用是遍历AST，对类型和符号进行检查，并且和符号表的构建也有关系，如果没有这两步，直接表示是tacgen.py中调用transform时报错，而且也不能对程序的语义正确性进行判断  
+1. 可以，因为在main.py里面删去step_tac里面的namer.transform(p),typer.transform(p)函数不受影响，namer主要与符号表的构建有关，typer主要与类型检查有关，现阶段暂不涉及这方面问题，所以可以删去  
 2. 在parse过程的词法语法分析中处理，报错为
 > Syntax error: line 2, column 7
 > return;
 > Syntax error: line 3, column 1
 > \}
 > Syntax error: EOF
-3. 同时定义`frontend/ast/tree.py:Unary，utils/tac/tacop.py:TacUnaryOp，utils/riscv.py:RvUnaryOp`是因为会在不同的编译步骤中被使用，如tree.py主要是与AST抽象语法树有关，其中的Unary是AST中节点类型，tacop.py主要是与三地址码有关，其中的TacUnaryOp是三地址码用于生成单目运算表达式的类，RvUnaryOp是RISC-V汇编语言中用于生成单目运算表达式的指令，所以定义了三种不同的单目运算符类型用于不同地方  
+1. 同时定义`frontend/ast/tree.py:Unary，utils/tac/tacop.py:TacUnaryOp，utils/riscv.py:RvUnaryOp`是因为会在不同的编译步骤中被使用，如tree.py主要是与AST抽象语法树有关，其中的Unary是AST中节点类型，tacop.py主要是与三地址码有关，其中的TacUnaryOp是三地址码用于生成单目运算表达式的类，RvUnaryOp是RISC-V汇编语言中用于生成单目运算表达式的指令，所以定义了三种不同的单目运算符类型用于不同地方  
 ## step2
 ### 新增代码
 - 首先分析各文件的用途，知道中间代码主要由frontend/tacgen中的tacgen.py产生，于是仿照`visitUnary`函数中的提示  
