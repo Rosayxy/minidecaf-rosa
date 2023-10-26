@@ -1,4 +1,4 @@
 int foo(int x,int y) {
-    int z=(z=1);
+    int z=(z=y);
     return z;
 }
